@@ -385,17 +385,21 @@ summary {
 <li><p>If the relationship between the winner’s ranking and the winner’s hand of play differs by the year of play.</p></li>
 </ol>
 </div>
-<div id="part-2-fitting-the-full-mlr-model" class="section level1">
-<h1>Part 2: Fitting the Full MLR Model</h1>
+<div id="part-2-fitting-the-full-two-way-interaction-model" class="section level1">
+<h1>Part 2: Fitting the “Full” Two-way Interaction Model</h1>
 <p>If we are interested in creating the “best” predictive model of the ranking of the winning player based on the variables available in the data.</p>
 <p>One approach would be to fit the most complicated model possible and then trim it down to only the variables that seem to matter the most. To fit the “full” MLR model, including <strong>all</strong> of the variables in the data, we do the following:</p>
-<pre class="r"><code>full_model &lt;- lm(winner_rank ~ . , data = matches)
-## The ~ . tells R that you are interested in using EVERY available variable 
-## to model the winner&#39;s rank
+<pre class="r"><code>full_interact &lt;- lm(winner_rank ~ .^2 , data = matches)
+## The ~ .^2 tells R that you are interested in using EVERY available variable 
+## AND all the interactions between two variables to model the winner&#39;s rank
+
 
 ## The code chunk option is set to cache = TRUE, to save the results of this 
-## big model, so it doesn&#39;t have to run every time (which is inefficient)</code></pre>
-<p><strong>Assess the assumptions of the “full” multiple linear regression model.</strong></p>
+## big model, so it doesn&#39;t have to run every time (which is inefficient)
+
+interact_coef &lt;- length(full_interact$coefficients)
+## Gives the number of coefficients that were estimated for the model!</code></pre>
+<p><strong>Assess the assumptions of this “full” multiple linear regression model.</strong></p>
 <ul>
 <li><p>Independence:</p></li>
 <li><p>Linear relationships between X’s and Y:</p></li>
@@ -429,9 +433,18 @@ summary {
 <li><p>A forward selection starts with no variables in the model and tests to see if variables should be added to the model, based on the selection criteria. This process of adding variables is carried out until every variable has been considered.</p></li>
 <li><p>A backward selection starts with a full model of all “candidate” variables, and then deletes variables from the model, based on the selection criteria. This process of deleting variables is continued until the resulting model is deemed a “poorer” model.</p></li>
 </ul>
+<p>Let’s see how this is done!</p>
 <div id="backwards-selection" class="section level3">
 <h3>Backwards Selection</h3>
-<p>Let’s see how this is done! Since we’ve already fit the full model, let’s try backwards model selection first. Since we’re familiar with p-values, let’s start there for our model selection criteria.</p>
+<p>Since the full two-way interaction model has 296 total variables we would need to assess whether they should be included in the model, let’s fit the “full” additive model instead.</p>
+<pre class="r"><code>full_additive &lt;- lm(winner_rank ~ . , data = matches)
+## The ~ . tells R that you are interested in using EVERY available variable 
+## to model the winner&#39;s rank (NO interactions here)
+
+
+additive_coef &lt;- length(full_additive$coefficients)
+## Gives the number of coefficients that were estimated for the model!</code></pre>
+<p>backwards model selection first. Since we’re familiar with p-values, let’s start there for our model selection criteria.</p>
 <p>To carry process out you do the following steps:</p>
 <ol style="list-style-type: decimal">
 <li>Inspect the full model for the variable with the highest p-value.</li>
@@ -441,8 +454,11 @@ summary {
 <li><p>Delete the variable with the largest p-value above the threshold and refit a new model with <strong>all</strong> the remaining variables.</p></li>
 <li><p>Continue carrying out step 2, until <strong>every</strong> variable in the model has a p-value below the p-value threshold.</p></li>
 </ol>
+<p></br></p>
 <p><strong>What p-value do you feel is appropriate for a model that neither “underfits” nor “overfits” the data?</strong></p>
+<p></br></p>
 <p><strong>What final model did you end up with? What variables are included?</strong></p>
+<p></br></p>
 </div>
 </div>
 <div id="forward-selection" class="section level2">
@@ -465,21 +481,28 @@ summary {
 <pre class="r"><code>basic &lt;- lm(winner_rank ~ 1, data = matches)
 ## Simplest model -- one mean rank for ALL players
 
-aic_model &lt;- step(full_model, 
+aic_model &lt;- step(full_additive, 
                   ## model to perform stepwise selection on
-                  scope = c(lower = basic, upper = full_model), 
+                  scope = c(lower = basic, upper = full_additive), 
                   ## range of models to consider
                   direction = &quot;backward&quot;, 
                   ## direction to use for stepwise selection 
                   k = 2)
                   ## penalty to use for degrees of freedom</code></pre>
 <p><strong>What variables were retained in this model?</strong> <strong>How does this model differ from the backwards selection model?</strong></p>
-<p><strong>What threshold of AIC do you think the <code>step()</code> function use?</strong> Hint: Look at the AIC from the model fitting output. What is the smallest difference in AIC between two models?</p>
+<p></br> </br></p>
+<p><strong>What threshold of AIC do you think the <code>step()</code> function use?</strong><br />
+Hint: Look at the AIC from the model fitting output. What is the smallest difference in AIC between two models?</p>
+<p></br> </br></p>
 </div>
 </div>
 <div id="thinking-about-model-selection" class="section level1">
 <h1>Thinking About Model Selection</h1>
+<p></br></p>
 <p><strong>What are issues that you see with using stepwise procedures to decide what variables should be included in the model?</strong></p>
+<p></br> </br></p>
+<p><strong>What other measures of model fit do you think would be worth considering when deciding what the “best” model may be?</strong></p>
+<p></br> </br></p>
 <p><strong>What recommendation would you give to someone with a large number of predictor variables who wants to know how they can choose the &quot;best model?</strong></p>
 </div>
 

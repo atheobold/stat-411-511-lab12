@@ -37,8 +37,6 @@ warned when working with those sets.
 ```{r match, echo = FALSE}
 
 matches <- read_csv("data/tennis_train.csv") %>% 
-  ## counts the number of whitespaces (spaces between sets)
-  ## adds 1 to get to the total number of games played
   select(-id, -loser_ioc, -winner_ioc)
   
 # To inspect the data, use glimpse() or View() IN THE CONSOLE -- NOT HERE!
@@ -95,6 +93,7 @@ full_interact <- lm(winner_rank ~ .^2 , data = matches)
 
 interact_coef <- length(full_interact$coefficients)
 ## Gives the number of coefficients that were estimated for the model!
+## This is MUCH larger than 11, because many of the categorical variables have lots of levels!
 ```
 
 
@@ -195,11 +194,12 @@ new model with **all** the remaining variables.
 3. Continue carrying out step 2, until **every** variable in the model has a 
 p-value below the p-value threshold. 
 
+</br>
 
-__What p-value do you feel is appropriate for a model that neither "underfits" 
-nor "overfits" the data?__
+__What p-value do you feel is appropriate for a model that neither "underfits" nor "overfits" the data?__
 
 
+</br>
 
 ```{r backward, echo = FALSE}
 ## Carry out the backwards selection procedure here! 
@@ -207,17 +207,24 @@ nor "overfits" the data?__
 
 ```
 
+__Did you need to remove any variables from the model, with your selection criteria?__
+
+
 __What final model did you end up with? What variables are included?__
 
 
-## Forward Selection 
+</br>
+
+## Forward Selection  
 
 You can think of forward model selection as the opposite of backward selection. 
 We start with no variables (1 mean only) and then add variables one at a time, 
 so long as each variable satisfies our selection criteria. 
 
 Let's try a new selection criteria that we haven't explored before, Akaike's 
-"An Information Criterion" or AIC. 
+"An Information Criterion" or AIC. Roughly, you can think of AIC as estimating
+the "quality" of each model, relative to each of the other models *considered*.
+For this reason, many disciplines use AIC as a means for model selection.
 
 To carry out forward model selection you do the following steps:
 
@@ -248,38 +255,51 @@ basic <- lm(winner_rank ~ 1, data = matches)
 
 aic_model <- step(full_additive, 
                   ## model to perform stepwise selection on
-                  scope = c(lower = basic, upper = full_model), 
+                  scope = c(lower = basic, upper = full_additive), 
                   ## range of models to consider
-                  direction = "backward", 
+                  direction = "forward", 
                   ## direction to use for stepwise selection 
                   k = 2)
                   ## penalty to use for degrees of freedom
 ```
 
 __What variables were retained in this model?__
-__How does this model differ from the backwards selection model?__ 
+__Does this model differ from the backwards selection model?__ 
 
 
-__What threshold of AIC do you think the `step()` function use?__
+
+</br>
+</br>
+
+__What threshold of AIC do you think the `step()` function use?__  
 Hint: Look at the AIC from the model fitting output. What is the smallest 
 difference in AIC between two models?
 
 
+</br>
+</br>
+
 
 # Thinking About Model Selection 
 
-__What are issues that you see with using stepwise procedures to decide what 
-variables should be included in the model?__ 
+</br>
+
+__What are issues that you see with using stepwise procedures to decide what variables should be included in the model?__ 
+*Hint*: How are p-values calculated for variables in each of the two model 
+selection methods?
+
+
+</br>
+</br>
+
+__What other measures of model fit do you think would be worth considering when deciding what the "best" model may be?__ 
 
 
 
-__What other measures of model fit do you think would be worth considering 
-when deciding what the "best" model may be?__ 
+</br>
+</br>
 
-
-
-__What recommendation would you give to someone with a large number of 
-predictor variables who wants to know how they can choose the "best model?__ 
+__What recommendation would you give to someone with a large number of predictor variables who wants to know how they can use multiple linear regression to choose the "best" model?__ 
 
 
 
