@@ -1,21 +1,85 @@
 ---
-title: "Sports Analytics - SLR & MLR"
+title: "Stat 411/511 Kaggle - MLR Model Selection & Prediction"
 author: "Your Group's Names Here!"
-date: "Due: November 19, 2019"
+date: "Due: December 3, 2019"
 output: html_document
 ---
 
-Here are some things to start:
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, 
+                      warning = FALSE, 
+                      fig.width = 5, 
+                      fig.height = 5)
 
-Which player did the most rapidly climb the ranks through the years?
-Does the rank correlates with the money earn by the player?
-What can we find about the age?
-There is some deterministic factor to own the match?
+library(tidyverse)
+library(stringr)
+```
 
-https://www.kaggle.com/ambarish/omnibus-womens-and-mens-tennis-matches-analysis
+# Women's Tennis Association
 
-https://www.kaggle.com/joaoevangelista/wta-matches-and-rankings/data#players.csv
+The WTA (Women's Tennis Association) is the principal organizing body of women's
+professional tennis, it governs its own tour worldwide. On its website, it 
+provides a lot of data about the players as individuals as well the tour matches
+with results and the current rank during it.
 
-https://towardsdatascience.com/extensive-analysis-of-women-tennis-matches-5c98333f338a
+Luckily for us, WTA data were scraped from the website and collected 
+into nice, easily consumable datasets 
+(https://www.kaggle.com/joaoevangelista/wta-matches-and-rankings/data#players.csv).
 
-https://www.nytimes.com/2019/09/12/learning/whats-going-on-in-this-graph-sept-18-2019.html
+The dataset present here covers statistics of players registered on the WTA, the
+matches that happened on each tour by year, with results, as well some 
+qualifying matches for the tours.
+
+You may not find all data of the matches prior to 2006, so be 
+warned when working with those sets.
+
+# Data 
+
+```{r match, echo = FALSE}
+
+matches <- read_csv("data/tennis_train.csv") %>% 
+  ## counts the number of whitespaces (spaces between sets)
+  ## adds 1 to get to the total number of games played
+  select(-id)
+  
+# To inspect the data, use glimpse() or View() IN THE CONSOLE -- NOT HERE!
+
+```
+
+# Part 1: Visualization 
+
+__Create a visualizations to explore:__ 
+
+1. If the relationship between the number of games played and the winner's 
+ranking differs by the surface the game was played on.   
+
+
+2. If the relationship between the winner's ranking and the loser's ranking 
+differs by the age of the winner.  
+
+3. If the relationship between the winner's ranking and the winner's hand of 
+play differs by the year of play. 
+
+
+
+# Part 2: Choosing a Model 
+
+If we are interested in creating the "best" predictive model of the ranking of 
+the winning player based on the variables available in the data. 
+
+One approach would be to fit the most complicated model possible and then 
+trim it down to only the variables that seem to matter the most. To fit the 
+"full" MLR model, including **all** of the variables in the data, we do the 
+following:
+
+```{r full_mlr, cache = TRUE}
+
+full_model <- lm(winner_rank ~ . , data = matches)
+## The ~ . tells R that you are interested in using EVERY available variable 
+## to model the winner's rank
+
+## The code chunk option is set to cache = TRUE, to save the results of this 
+## big model, so it doesn't have to run every time (which is inefficient)
+
+```
+
