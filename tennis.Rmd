@@ -1,5 +1,5 @@
 ---
-title: "Stat 411/511 Kaggle - MLR Model Selection & Prediction"
+title: "MLR Model Selection"
 author: "Your Group's Names Here!"
 date: "Due: December 3, 2019"
 output: html_document
@@ -12,7 +12,8 @@ knitr::opts_chunk$set(message = FALSE,
                       fig.height = 5)
 
 library(tidyverse)
-library(stringr)
+library(car) ## For vif() function
+library(GGally) ## For scatmat() function
 ```
 
 # Women's Tennis Association
@@ -33,14 +34,12 @@ qualifying matches for the tours.
 You may not find all data of the matches prior to 2006, so be 
 warned when working with those sets.
 
-# Data 
-
 ```{r match, echo = FALSE}
 
 matches <- read_csv("data/tennis_train.csv") %>% 
   ## counts the number of whitespaces (spaces between sets)
   ## adds 1 to get to the total number of games played
-  select(-id)
+  select(-id, -loser_ioc, -winner_ioc)
   
 # To inspect the data, use glimpse() or View() IN THE CONSOLE -- NOT HERE!
 
@@ -53,16 +52,28 @@ __Create a visualizations to explore:__
 1. If the relationship between the number of games played and the winner's 
 ranking differs by the surface the game was played on.   
 
+```{r viz1}
+
+```
+
 
 2. If the relationship between the winner's ranking and the loser's ranking 
 differs by the age of the winner.  
 
+```{r viz2}
+
+```
+
+
 3. If the relationship between the winner's ranking and the winner's hand of 
 play differs by the year of play. 
 
+```{r viz3}
+
+```
 
 
-# Part 2: Choosing a Model 
+# Part 2: Fitting the "Full" Two-way Interaction Model 
 
 If we are interested in creating the "best" predictive model of the ranking of 
 the winning player based on the variables available in the data. 
@@ -72,14 +83,204 @@ trim it down to only the variables that seem to matter the most. To fit the
 "full" MLR model, including **all** of the variables in the data, we do the 
 following:
 
-```{r full_mlr, cache = TRUE}
+```{r interactive, cache = TRUE}
 
-full_model <- lm(winner_rank ~ . , data = matches)
-## The ~ . tells R that you are interested in using EVERY available variable 
-## to model the winner's rank
+full_interact <- lm(winner_rank ~ .^2 , data = matches)
+## The ~ .^2 tells R that you are interested in using EVERY available variable 
+## AND all the interactions between two variables to model the winner's rank
+
 
 ## The code chunk option is set to cache = TRUE, to save the results of this 
 ## big model, so it doesn't have to run every time (which is inefficient)
 
+interact_coef <- length(full_interact$coefficients)
+## Gives the number of coefficients that were estimated for the model!
 ```
+
+
+__Assess the assumptions of this "full" multiple linear regression model.__
+
+* Independence:  
+
+* Linear relationships between X's and Y:  
+
+* Constant variance:  
+
+* Normally distributed errors:
+
+* No multicollinearity:
+
+* No influential points:  
+
+
+# Part 3: Choosing a Model 
+
+The model above is clearly too big, but the question is how should we cut it 
+down? The basic problem of model selection is to choose the "best" model, 
+between competing linear regression models. 
+
+We don't want to fit a model that is too small, because it can "underfit" the 
+data. This can result in poor predictions, with high bias. A model that is too
+big is also not great, since it can "overfit" the data. This can also result in 
+poor predictions, with (potentially) low bias, but also high variance. 
+
+![](images/bias_variance.png)
+
+
+## Model Selection Methods 
+
+There are many model selection techniques, but the main ones are:  
+
+* Cross-validation 
+* AIC or BIC-like scores  
+* Stepwise regression methods
+
+We're going to focus on the last two, stepwise regression and AIC based model 
+selection. 
+
+## Stepwise Regression 
+
+According to Wikipedia, stepwise regression is a "method of fitting regression 
+models in which the choice of predictive variables is carried out by an 
+automatic procedure." 
+
+This automatic procedure is carried out when a variable is considered for 
+addition to or removal from the model, based on a specified selection criteria. 
+This selection criteria can be based on: p-values, adjusted R-squared, AIC, and
+others. 
+
+* A forward selection starts with no variables in the model and tests to see if 
+variables should be added to the model, based on the selection criteria. This 
+process of adding variables is carried out until every variable has been 
+considered. 
+
+* A backward selection starts with a full model of all "candidate" variables,
+and then deletes variables from the model, based on the selection criteria. This
+process of deleting variables is continued until the resulting model is deemed 
+a "poorer" model. 
+
+Let's see how this is done! 
+
+### Backwards Selection 
+
+Since the full two-way interaction model has 296 total variables we would need 
+to assess whether they should be included in the model, let's fit the "full" 
+additive model instead. 
+
+```{r additive}
+full_additive <- lm(winner_rank ~ . , data = matches)
+## The ~ . tells R that you are interested in using EVERY available variable 
+## to model the winner's rank (NO interactions here)
+
+
+additive_coef <- length(full_additive$coefficients)
+## Gives the number of coefficients that were estimated for the model!
+
+```
+
+
+backwards model selection first. Since we're familiar with p-values, let's start
+there for our model selection criteria. 
+
+To carry process out you do the following steps:
+
+1. Inspect the full model for the variable with the highest p-value. 
+
+**Keep in mind** you will need to use an ANOVA table if you have categorical 
+variables in the model with more than 2 levels!  
+
+2. Delete the variable with the largest p-value above the threshold and refit a 
+new model with **all** the remaining variables. 
+
+3. Continue carrying out step 2, until **every** variable in the model has a 
+p-value below the p-value threshold. 
+
+
+__What p-value do you feel is appropriate for a model that neither "underfits" 
+nor "overfits" the data?__
+
+
+
+```{r backward, echo = FALSE}
+## Carry out the backwards selection procedure here! 
+## Keep ALL of your code from you model selection!
+
+```
+
+__What final model did you end up with? What variables are included?__
+
+
+## Forward Selection 
+
+You can think of forward model selection as the opposite of backward selection. 
+We start with no variables (1 mean only) and then add variables one at a time, 
+so long as each variable satisfies our selection criteria. 
+
+Let's try a new selection criteria that we haven't explored before, Akaike's 
+"An Information Criterion" or AIC. 
+
+To carry out forward model selection you do the following steps:
+
+1. Add the first variable to the the mean only model. Keep the variable **if** 
+the resulting model has an AIC larger than the mean only model. 
+
+2. Add the next variable to the model. Keep this variable **if** the resulting 
+model has an AIC larger than the last model.  
+
+3. Continue carrying out step 2, until you have considered **every** variable 
+in the data! 
+
+
+Let's see how we can do this in `R`. The `step()` function is a handy function 
+that carries out stepwise model selection based on the AIC criterion. The 
+function requires four main arguments: 
+
+1. The model you wish to perform the stepwise selection on
+2. The biggest and smallest models you want for the function to consider 
+3. The direction of model selection you want for it to use
+4. The degrees of freedom to use for the penalty term -- k = 2 gives AIC, 
+k = log(n) gives BIC 
+
+
+```{r forward, results = 'hide', cache = TRUE}
+basic <- lm(winner_rank ~ 1, data = matches)
+## Simplest model -- one mean rank for ALL players
+
+aic_model <- step(full_additive, 
+                  ## model to perform stepwise selection on
+                  scope = c(lower = basic, upper = full_model), 
+                  ## range of models to consider
+                  direction = "backward", 
+                  ## direction to use for stepwise selection 
+                  k = 2)
+                  ## penalty to use for degrees of freedom
+```
+
+__What variables were retained in this model?__
+__How does this model differ from the backwards selection model?__ 
+
+
+__What threshold of AIC do you think the `step()` function use?__
+Hint: Look at the AIC from the model fitting output. What is the smallest 
+difference in AIC between two models?
+
+
+
+# Thinking About Model Selection 
+
+__What are issues that you see with using stepwise procedures to decide what 
+variables should be included in the model?__ 
+
+
+
+__What other measures of model fit do you think would be worth considering 
+when deciding what the "best" model may be?__ 
+
+
+
+__What recommendation would you give to someone with a large number of 
+predictor variables who wants to know how they can choose the "best model?__ 
+
+
+
 
